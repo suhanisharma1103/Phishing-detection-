@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Node / Chrome extension build artifacts
+node_modules/
+dist/
+build/
+
+# VS Code / OS / Logs
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+
+# Model / data (if you don't want to push large dataset files)
+*.csv
+model/

@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Email/URL Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(1deg); }
+        }
+        
+        .container {
+            max-width: 520px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 3rem 2.5rem;
+            border-radius: 24px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            animation: slideIn 0.8s ease-out;
+            transform-origin: center;
+        }
+        
+        @keyframes slideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-radius: 24px;
+            pointer-events: none;
+        }
+        
+        h2 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+        
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+        
+        form {
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+            letter-spacing: 0.3px;
+        }
+        
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem 1.25rem;
+            border-radius: 16px;
+            border: 2px solid #e2e8f0;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #f8fafc;
+            line-height: 1.6;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        textarea:focus {
+            border: 2px solid #667eea;
+            outline: none;
+            background: #ffffff;
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        textarea::placeholder {
+            color: #a0aec0;
+            font-style: italic;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            font-weight: 700;
+            border: none;
+            border-radius: 16px;
+            padding: 1rem 0;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+        
+        .submit-btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .result {
+            margin-top: 2.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+            border-left: 5px solid #48bb78;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            animation: resultSlide 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .result::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.05) 0%, rgba(56, 178, 172, 0.05) 100%);
+            pointer-events: none;
+        }
+        
+        @keyframes resultSlide {
+            0% {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .result h3 {
+            margin-top: 0;
+            color: #2f855a;
+            font-size: 1.3rem;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+        
+        .result h3::before {
+            content: '✓';
+            position: absolute;
+            left: -1.5rem;
+            color: #48bb78;
+            font-weight: bold;
+        }
+        
+        .result p {
+            color: #2d3748;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin: 0;
+            position: relative;
+        }
+        
+        /* Loading state */
+        .loading .submit-btn {
+            background: #a0aec0;
+            cursor: not-allowed;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+            
+            .container {
+                padding: 2rem 1.5rem;
+                border-radius: 20px;
+            }
+            
+            h2 {
+                font-size: 1.6rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            textarea {
+                min-height: 100px;
+                padding: 0.875rem 1rem;
+            }
+            
+            .submit-btn {
+                padding: 0.875rem 0;
+                font-size: 1rem;
+            }
+            
+            .result {
+                padding: 1.25rem;
+                margin-top: 2rem;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .container {
+                padding: 1.5rem 1rem;
+            }
+            
+            h2 {
+                font-size: 1.4rem;
+            }
+            
+            .result h3::before {
+                position: static;
+                margin-right: 0.5rem;
+            }
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .container {
+                background: rgba(26, 32, 44, 0.95);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            h2 {
+                color: #f7fafc;
+            }
+            
+            label {
+                color: #e2e8f0;
+            }
+            
+            textarea {
+                background: #2d3748;
+                border: 2px solid #4a5568;
+                color: #f7fafc;
+            }
+            
+            textarea:focus {
+                background: #2d3748;
+                border: 2px solid #667eea;
+            }
+            
+            .result {
+                background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+                border-left: 5px solid #68d391;
+            }
+            
+            .result h3 {
+                color: #68d391;
+            }
+            
+            .result p {
+                color: #e2e8f0;
+            }
+        }
+        
+        /* Accessibility improvements */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* Focus visible for better accessibility */
+        .submit-btn:focus-visible {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+        }
+        
+        textarea:focus-visible {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+        }
+        
+        .result.legit {
+            background: #e6fffa;
+            border-left: 5px solid #38a169;
+        }
+        .result.phishy {
+            background: #fff5f5;
+            border-left: 5px solid #e53e3e;
+        }
+        .result.legit h3, .result.legit p {
+            color: #2f855a;
+        }
+        .result.phishy h3, .result.phishy p {
+            color: #c53030;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Email/URL Classification</h2>
+    <form method="post">
+        <label for="input_text">Enter email text or URL:</label>
+        <div class="input-wrapper">
+            <textarea 
+                id="input_text" 
+                name="input_text" 
+                required 
+                placeholder="Paste your email content or URL here..."
+            >{{ request.form.get('input_text', '') }}</textarea>
+        </div>
+        <button type="submit" class="submit-btn">Classify Content</button>
+    </form>
+    
+    {% if result %}
+    <div class="result {% if 'Legitimate' in result %}legit{% else %}phishy{% endif %}">
+        <h3>Classification Result</h3>
+        <p>{{ result }}</p>
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>
